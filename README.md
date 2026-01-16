@@ -5,6 +5,6 @@
 
 2. 23DCS022 Sahil Thakur
  
-3. 23DCS023 Sanjeev Kumar
+3. 23DCS023 Sanjeev Thakur
 
 4. 23DCS024 Sarthak Katiyar
