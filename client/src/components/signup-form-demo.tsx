@@ -1,103 +1,217 @@
 "use client";
-import React from "react";
+
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  IconBrandGithub,
-  IconBrandGoogle,
-  IconBrandOnlyfans,
-} from "@tabler/icons-react";
 
-export default function SignupFormDemo() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Form submitted");
+export default function ComplaintForm() {
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    roll_no: "",
+    type_of_complaint: "",
+    description: "",
+    location: "",
+    date: "",
+    time: "",
+    image: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess(false);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/complaints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setSuccess(true);
+        alert("Complaint submitted successfully!");
+        setFormData({
+          first_name: "", last_name: "", email: "", roll_no: "",
+          type_of_complaint: "", description: "", location: "",
+          date: "", time: "", image: ""
+        });
+      } else {
+        alert("Failed to submit complaint");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Could not connect to server. Is backend running?");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
       <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200 text-center">
         Campus Network Complaint Form
       </h2>
       <p className="mt-2 max-w-sm text-sm text-neutral-600 dark:text-neutral-300 text-center">
-        Make your complaint....
+        Report your WiFi / Internet issue
       </p>
+
+      {success && (
+        <div className="mt-4 p-3 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg text-center">
+          Complaint submitted successfully!
+        </div>
+      )}
 
       <form className="my-8" onSubmit={handleSubmit}>
         <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
           <LabelInputContainer>
-            <Label htmlFor="firstname">First name</Label>
-            <Input id="firstname" placeholder="Tyler" type="text" />
+            <Label htmlFor="first_name">First name</Label>
+            <Input 
+              id="first_name" 
+              placeholder="Tyler" 
+              type="text" 
+              value={formData.first_name}
+              onChange={handleChange}
+              required 
+            />
           </LabelInputContainer>
+
           <LabelInputContainer>
-            <Label htmlFor="lastname">Last name</Label>
-            <Input id="lastname" placeholder="Durden" type="text" />
+            <Label htmlFor="last_name">Last name</Label>
+            <Input 
+              id="last_name" 
+              placeholder="Durden" 
+              type="text" 
+              value={formData.last_name}
+              onChange={handleChange}
+              required 
+            />
           </LabelInputContainer>
         </div>
+
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
-          <Input id="email" placeholder="projectmayhem@fc.com" type="email" />
+          <Input 
+            id="email" 
+            placeholder="your.email@college.edu" 
+            type="email" 
+            value={formData.email}
+            onChange={handleChange}
+            required 
+          />
         </LabelInputContainer>
+
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="Roll-No">Roll-No</Label>
-          <Input id="roll no" placeholder="23DCS024" type="text" />
+          <Label htmlFor="roll_no">Roll Number</Label>
+          <Input 
+            id="roll_no" 
+            placeholder="23DCS024" 
+            type="text" 
+            value={formData.roll_no}
+            onChange={handleChange}
+            required 
+          />
         </LabelInputContainer>
+
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="Type of Complaint">Type of Complaint</Label>
-          <Input id="type of complaint" placeholder="Not Able to connect/Slow Speed/No Internet" type="text" />
+          <Label htmlFor="type_of_complaint">Type of Complaint</Label>
+          <Input 
+            id="type_of_complaint" 
+            placeholder="No Internet / Slow Speed / Router Issue" 
+            type="text" 
+            value={formData.type_of_complaint}
+            onChange={handleChange}
+            required 
+          />
         </LabelInputContainer>
+
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="Status">Status</Label>
-          <Input id="status" placeholder="Pending/Resolved" type="text" />
+          <Label htmlFor="description">Description</Label>
+          <textarea
+            id="description"
+            placeholder="Describe your issue in detail..."
+            value={formData.description}
+            onChange={handleChange}
+            rows={4}
+            required
+            className={cn(
+              "flex w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm",
+              "dark:border-neutral-800 dark:bg-neutral-950",
+              "focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600",
+              "placeholder:text-neutral-400"
+            )}
+          />
         </LabelInputContainer>
+
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="Description">Description</Label>
-          <Input id="description" placeholder="Describe your issue in detail" type="text" />
+          <Label htmlFor="location">Location</Label>
+          <Input 
+            id="location" 
+            placeholder="Hostel Block A - Room 305" 
+            type="text" 
+            value={formData.location}
+            onChange={handleChange}
+            required 
+          />
         </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="Location">Location</Label>
-          <Input id="location" placeholder="Location of the issue" type="text" />
+
+        <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+          <LabelInputContainer>
+            <Label htmlFor="date">Date</Label>
+            <Input 
+              id="date" 
+              type="date" 
+              value={formData.date}
+              onChange={handleChange}
+              required 
+            />
+          </LabelInputContainer>
+
+          <LabelInputContainer>
+            <Label htmlFor="time">Time</Label>
+            <Input 
+              id="time" 
+              type="time" 
+              value={formData.time}
+              onChange={handleChange}
+              required 
+            />
+          </LabelInputContainer>
+        </div>
+
+        <LabelInputContainer className="mb-6">
+          <Label htmlFor="image">Upload Image (Optional)</Label>
+          <Input 
+            id="image" 
+            type="file" 
+            accept="image/*"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                setFormData(prev => ({ ...prev, image: e.target.files![0].name }));
+              }
+            }}
+          />
         </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="Date&Time">Date&Time</Label>
-          <Input id="date&time" placeholder="Date and Time of the issue" type="text" />
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="Image">Image(Optional)</Label>
-          <Input id="image" placeholder="Upload image of the issue" type="file" />
-        </LabelInputContainer>
+
         <button
-          className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
+          className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 disabled:opacity-70"
           type="submit"
+          disabled={loading}
         >
-          Submit &rarr;
+          {loading ? "Submitting Complaint..." : "Submit Complaint →"}
           <BottomGradient />
         </button>
-
-        <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-700" />
-
-        <div className="flex flex-col space-y-4">
-          <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
-            type="submit"
-          >
-            <IconBrandGithub className="h-4 w-4 text-neutral-800 dark:text-neutral-300" />
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              GitHub
-            </span>
-            <BottomGradient />
-          </button>
-          <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
-            type="submit"
-          >
-            <IconBrandGoogle className="h-4 w-4 text-neutral-800 dark:text-neutral-300" />
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              Google
-            </span>
-            <BottomGradient />
-          </button>
-        </div>
       </form>
     </div>
   );

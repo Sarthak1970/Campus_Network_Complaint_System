@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, LogIn, Moon, Sun } from 'lucide-react';
+import { Menu, X, LogIn } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 const navItems = [
@@ -67,12 +67,9 @@ export default function Navbar() {
               onClick={toggleDarkMode}
               className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
               aria-label="Toggle dark mode"
+              suppressHydrationWarning
             >
-              {theme === 'dark' ? (
-                <Sun size={20} className="text-yellow-500" />
-              ) : (
-                <Moon size={20} className="text-gray-600 dark:text-gray-400" />
-              )}
+              {theme === "dark" ? "☀️" : "🌙"}
             </button>
 
             <button
