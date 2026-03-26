@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"Complaint-System/internal/model"
@@ -25,7 +26,9 @@ func (h *ComplaintHandler) CreateComplaint(c *gin.Context) {
 
 	complaint, err := h.service.CreateComplaint(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create complaint"})
+		log.Printf("Error creating complaint : %+v",err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create complaint",
+		"details":err.Error()})
 		return
 	}
 

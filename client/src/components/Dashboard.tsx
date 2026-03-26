@@ -1,22 +1,106 @@
 // app/dashboard/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, TrendingUp, Clock, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react';
+import { Plus, TrendingUp, Clock, CheckCircle, AlertCircle, BarChart3, Loader } from 'lucide-react';
 
 type TimeFilter = '7d' | '30d' | '90d' | 'all';
 
-const mockStats = {
-  '7d': { total: 14, active: 6, resolved: 8, avgTime: '2.4 days' },
-  '30d': { total: 47, active: 19, resolved: 28, avgTime: '3.1 days' },
-  '90d': { total: 132, active: 41, resolved: 91, avgTime: '4.8 days' },
-  'all': { total: 289, active: 67, resolved: 222, avgTime: '5.2 days' },
-};
+interface DashboardStats {
+  total: number;
+  active: number;
+  resolved: number;
+  avgTime: string;
+  trendValue?: number;
+}
+
+interface RecentComplaint {
+  id: number;
+  first_name: string;
+  last_name: string;
+  description: string;
+  type_of_complaint: string;
+  status: string;
+  location: string;
+  time: string;
+}
+
+interface DashboardData {
+  stats: Record<TimeFilter, DashboardStats>;
+  recentComplaints: RecentComplaint[];
+}
 
 export default function DashboardPage() {
   const [filter, setFilter] = useState<TimeFilter>('30d');
-  const stats = mockStats[filter];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+
+  // Fetch dashboard data on component mount and when filter changes
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/dashboard');
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch dashboard data: ${response.statusText}`);
+      }
+
+      const data: DashboardData = await response.json();
+      setDashboardData(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching dashboard data';
+      setError(errorMessage);
+      console.error('Dashboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stats = dashboardData?.stats[filter];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="h-12 w-12 text-emerald-600 animate-spin" />
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 p-6 bg-red-50 dark:bg-red-950 rounded-3xl border border-red-200 dark:border-red-900">
+          <AlertCircle className="h-12 w-12 text-red-600" />
+          <p className="text-red-900 dark:text-red-100 text-center">{error}</p>
+          <button
+            onClick={fetchDashboardData}
+            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData || !stats) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">No data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-12">
@@ -69,7 +153,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-2 mt-6 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
               <TrendingUp className="h-4 w-4" />
-              <span>+12% from last period</span>
+              <span>+{stats.trendValue || 12}% from last period</span>
             </div>
           </div>
 
@@ -132,30 +216,40 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-            {[
-              { id: 'NC-2384', issue: 'No WiFi in Hostel Block A', status: 'Active', time: '2 hours ago' },
-              { id: 'NC-2383', issue: 'Slow internet in Library', status: 'Resolved', time: 'Yesterday' },
-              { id: 'NC-2382', issue: 'Router not working in Academic Block', status: 'Resolved', time: '3 days ago' },
-            ].map((complaint) => (
-              <div key={complaint.id} className="px-8 py-5 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                <div className="flex items-center gap-6">
-                  <span className="font-mono text-sm text-gray-400">{complaint.id}</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{complaint.issue}</span>
+            {dashboardData.recentComplaints.length > 0 ? (
+              dashboardData.recentComplaints.map((complaint) => (
+                <div key={complaint.id} className="px-8 py-5 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-6 flex-1">
+                    <span className="font-mono text-sm text-gray-400 min-w-12">#NC-{complaint.id}</span>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white">{complaint.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {complaint.first_name} {complaint.last_name} • {complaint.location}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                      {complaint.type_of_complaint}
+                    </span>
+                    <span
+                      className={`px-4 py-1 text-xs font-medium rounded-2xl whitespace-nowrap ${
+                        complaint.status === 'Active' || complaint.status === 'Pending' || complaint.status === 'Open'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
+                      }`}
+                    >
+                      {complaint.status}
+                    </span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 min-w-24 text-right">{complaint.time}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span
-                    className={`px-4 py-1 text-xs font-medium rounded-2xl ${
-                      complaint.status === 'Active'
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
-                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
-                    }`}
-                  >
-                    {complaint.status}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{complaint.time}</span>
-                </div>
+              ))
+            ) : (
+              <div className="px-8 py-12 text-center">
+                <p className="text-gray-500 dark:text-gray-400">No complaints found</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
