@@ -1,7 +1,8 @@
 package main
 
-import(
+import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"Complaint-System/internal/config"
@@ -11,33 +12,47 @@ import(
 	"Complaint-System/internal/service"
 )
 
-func main(){
-	cfg:=config.LoadConfig()
-	database.ConnectDB(cfg.DatabaseURL)
+func main() {
+	cfg := config.LoadConfig()
 
-	repo:=repository.NewComplaintRepository(database.DB)
-	svc:=service.NewComplaintService(repo)
-	handler:=handler.NewComplaintHandler(svc)
+	db, err := database.ConnectDB(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
 
-	r:=gin.Default()
+	repo := repository.NewComplaintRepository(db)
+	svc := service.NewComplaintService(repo)
+	h := handler.NewComplaintHandler(svc)
 
-	//CORS
-	r.Use(func(c *gin.Context){
-		c.Writer.Header().Set("Access-Control-Allow-Origin","*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods","GET,POST,OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers","Content-Type")
+	r := gin.Default()
 
-		if c.Request.Method=="OPTIONS"{
+	r.Use(corsMiddleware())
+
+	api := r.Group("/api")
+	{
+		api.POST("/complaints", h.CreateComplaint)
+	}
+
+	addr := ":" + cfg.ServerPort
+	fmt.Printf("Server running on http://localhost%s\n", addr)
+
+	if err := r.Run(addr); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		// Handle preflight requests
+		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
-		c.Next()
-	})
 
-	r.POST("api/complaints",handler.CreateComplaint)
-	
-	fmt.Printf("Server running on http://localhost:%s\n", cfg.ServerPort)
-		if err := r.Run(":" + cfg.ServerPort); err != nil {
-			fmt.Println("Error in starting the server:",err)
-		}
+		c.Next()
+	}
 }

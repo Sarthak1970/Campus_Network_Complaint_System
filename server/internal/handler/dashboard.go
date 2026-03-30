@@ -1,18 +1,17 @@
 package handler
- 
+
 import (
 	"net/http"
-	"log"
-	// "time"
- 
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"Complaint-System/internal/service"
 )
- 
+
 type DashboardHandler struct {
 	service *service.ComplaintService
 }
- 
+
 func NewDashboardHandler(service *service.ComplaintService) *DashboardHandler {
 	return &DashboardHandler{service: service}
 }
@@ -22,117 +21,96 @@ type DashboardStats struct {
 	Active     int    `json:"active"`
 	Resolved   int    `json:"resolved"`
 	AvgTime    string `json:"avgTime"`
-	TrendValue int    `json:"trendValue"` // percentage change
+	TrendValue int    `json:"trendValue,omitempty"`
 }
- 
+
 type DashboardResponse struct {
-	Stats map[string]DashboardStats `json:"stats"`
-	RecentComplaints []RecentComplaintItem `json:"recentComplaints"`
+	Stats            map[string]DashboardStats `json:"stats"`
+	RecentComplaints []map[string]interface{}  `json:"recentComplaints"`
 }
- 
-type RecentComplaintItem struct {
-	ID          int64  `json:"id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	Description string `json:"description"`
-	Type        string `json:"type_of_complaint"`
-	Status      string `json:"status"`
-	Location    string `json:"location"`
-	Time        string `json:"time"` // formatted as "X hours ago"
-}
- 
+
 func (h *DashboardHandler) GetDashboard(c *gin.Context) {
 	ctx := c.Request.Context()
- 
-	stats7d, err := h.service.GetComplaintStats(ctx, "7d")
+
+	stats7d, _ := h.service.GetComplaintStats(ctx, "7d")
+	stats30d, _ := h.service.GetComplaintStats(ctx, "30d")
+	stats90d, _ := h.service.GetComplaintStats(ctx, "90d")
+	statsAll, _ := h.service.GetComplaintStats(ctx, "all")
+
+	recent, err := h.service.GetRecentComplaints(ctx, 5)
 	if err != nil {
-		log.Printf("Error fetching 7d stats: %+v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch 7d statistics"})
-		return
+		recent = []map[string]interface{}{}
 	}
- 
-	stats30d, err := h.service.GetComplaintStats(ctx, "30d")
-	if err != nil {
-		log.Printf("Error fetching 30d stats: %+v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch 30d statistics"})
-		return
-	}
- 
-	stats90d, err := h.service.GetComplaintStats(ctx, "90d")
-	if err != nil {
-		log.Printf("Error fetching 90d stats: %+v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch 90d statistics"})
-		return
-	}
- 
-	statsAll, err := h.service.GetComplaintStats(ctx, "all")
-	if err != nil {
-		log.Printf("Error fetching all-time stats: %+v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch all-time statistics"})
-		return
-	}
- 
-	recentComplaints, err := h.service.GetRecentComplaints(ctx, 3)
-	if err != nil {
-		log.Printf("Error fetching recent complaints: %+v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch recent complaints"})
-		return
-	}
- 
+
 	response := DashboardResponse{
 		Stats: map[string]DashboardStats{
-			"7d":  stats7d,
-			"30d": stats30d,
-			"90d": stats90d,
-			"all": statsAll,
+			"7d":  convertToDashboardStats(stats7d),
+			"30d": convertToDashboardStats(stats30d),
+			"90d": convertToDashboardStats(stats90d),
+			"all": convertToDashboardStats(statsAll),
 		},
-		RecentComplaints: recentComplaints,
+		RecentComplaints: recent,
 	}
- 
+
 	c.JSON(http.StatusOK, response)
 }
- 
+
 func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
-	period := c.Query("period")
-	if period == "" {
-		period = "30d"
-	}
- 
+	period := c.DefaultQuery("period", "30d")
+
 	validPeriods := map[string]bool{"7d": true, "30d": true, "90d": true, "all": true}
 	if !validPeriods[period] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid period. Must be one of: 7d, 30d, 90d, all"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid period. Use: 7d, 30d, 90d, all"})
 		return
 	}
- 
-	ctx := c.Request.Context()
-	stats, err := h.service.GetComplaintStats(ctx, period)
+
+	stats, err := h.service.GetComplaintStats(c.Request.Context(), period)
 	if err != nil {
-		log.Printf("Error fetching stats for period %s: %+v", period, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch statistics"})
 		return
 	}
- 
-	c.JSON(http.StatusOK, stats)
+
+	c.JSON(http.StatusOK, convertToDashboardStats(stats))
 }
- 
+
 func (h *DashboardHandler) GetRecentComplaints(c *gin.Context) {
-	limit := 10 
- 
-	if limitStr := c.Query("limit"); limitStr != "" {
-		var l int
-		if _, err := (&l); err != nil || l <= 0 {
-			l = 10
-		}
-		limit = l
+	limitStr := c.DefaultQuery("limit", "10")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 10
 	}
- 
-	ctx := c.Request.Context()
-	complaints, err := h.service.GetRecentComplaints(ctx, limit)
+
+	complaints, err := h.service.GetRecentComplaints(c.Request.Context(), limit)
 	if err != nil {
-		log.Printf("Error fetching recent complaints: %+v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch recent complaints"})
 		return
 	}
- 
+
 	c.JSON(http.StatusOK, gin.H{"complaints": complaints})
+}
+
+func convertToDashboardStats(data map[string]interface{}) DashboardStats {
+	return DashboardStats{
+		Total:    getInt(data, "total"),
+		Active:   getInt(data, "active"),
+		Resolved: getInt(data, "resolved"),
+		AvgTime:  getString(data, "avgTime"),
+	}
+}
+
+func getInt(m map[string]interface{}, key string) int {
+	if v, ok := m[key].(int); ok {
+		return v
+	}
+	if v, ok := m[key].(float64); ok {
+		return int(v)
+	}
+	return 0
+}
+
+func getString(m map[string]interface{}, key string) string {
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return ""
 }

@@ -21,7 +21,3 @@ func SetupDashboardRoutes(router *gin.Engine, complaintService *service.Complain
 	}
 }
  
-// Usage in main.go:
-// complaintService := service.NewComplaintService(repository)
-// routes.SetupDashboardRoutes(router, complaintService)
- 

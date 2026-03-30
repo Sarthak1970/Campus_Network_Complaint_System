@@ -1,20 +1,22 @@
 package database
 
 import (
-	"context"
 	"fmt"
+	"log"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-var DB *pgxpool.Pool
+var DB *gorm.DB
 
-func ConnectDB(dbURL string){
+func ConnectDB(dsn string) (*gorm.DB, error) {
 	var err error
-	DB,err=pgxpool.New(context.Background(),dbURL)
-	if err!=nil{
-		fmt.Printf("Unable to connect to database : %v\n",err)
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
-	fmt.Println("Connected to DB Successfully")
-}
 
+	log.Println("Database connected successfully")
+	return DB, nil
+}

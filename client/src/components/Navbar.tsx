@@ -9,7 +9,7 @@ import { useTheme } from 'next-themes';
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'Make a Complaint', href: '/complaint' },
-  { label: 'All Requests', href: '/admin' },
+  { label: 'Admin', href: '/admindash' },
 ] as const;
 
 export default function Navbar() {
@@ -65,7 +65,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleDarkMode}
-              className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-1000 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
               aria-label="Toggle dark mode"
               suppressHydrationWarning
             >
