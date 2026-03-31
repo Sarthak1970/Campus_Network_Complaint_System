@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"Complaint-System/internal/config"
 	"Complaint-System/internal/database"
-	"Complaint-System/internal/handler"
+
+	"github.com/gin-gonic/gin"
+
+	// "Complaint-System/internal/handler"
 	"Complaint-System/internal/repository"
+	"Complaint-System/internal/routes"
 	"Complaint-System/internal/service"
+	// "Complaint-System/internal/model"
 )
 
 func main() {
@@ -19,24 +23,42 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
+	// err = db.AutoMigrate(&model.Complaint{}, &model.Admin{})
+	// if err != nil {
+	// 	log.Fatalf("Failed to migrate database: %v", err)
+	// }
+	// log.Println("Database migrated successfully")
 
 	repo := repository.NewComplaintRepository(db)
 	svc := service.NewComplaintService(repo)
-	h := handler.NewComplaintHandler(svc)
+	adminSvc := service.NewAdminService(repo)
 
 	r := gin.Default()
 
 	r.Use(corsMiddleware())
 
-	api := r.Group("/api")
-	{
-		api.POST("/complaints", h.CreateComplaint)
+	routes.SetupComplaintRoutes(r, svc)
+	routes.SetupDashboardRoutes(r, svc)
+	routes.SetupAdminRoutes(r, adminSvc)
+
+	r.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{
+			"message": "Complaint Management System API",
+			"status":  "success",
+			"routes": []string{
+				"/api/complaints",
+				"/api/dashboard",
+			},
+		})
+	})
+
+	fmt.Println("Server running on http://localhost:" + cfg.ServerPort)
+	fmt.Println("Registered Routes:")
+	for _, route := range r.Routes() {
+		fmt.Printf("  %s  %s\n", route.Method, route.Path)
 	}
 
-	addr := ":" + cfg.ServerPort
-	fmt.Printf("Server running on http://localhost%s\n", addr)
-
-	if err := r.Run(addr); err != nil {
+	if err := r.Run(":" + cfg.ServerPort); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
@@ -45,14 +67,12 @@ func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
 
-		// Handle preflight requests
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
-
 		c.Next()
 	}
 }

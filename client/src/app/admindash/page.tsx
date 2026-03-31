@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, CheckCircle, AlertCircle } from "lucide-react";
+import { LogOut, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "../lib/config";
 
 interface Complaint {
   id: number;
@@ -22,24 +23,24 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/adminlogin");
+    const adminToken = localStorage.getItem("adminToken");
+    if (!adminToken) {
+      router.push("/adminlogin");    
       return;
     }
 
     const fetchComplaints = async () => {
       try {
-        const res = await fetch("http://localhost:8000/admin/complaints", {
+        const res = await fetch(`${API_BASE_URL}/admin/complaints`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${adminToken}`,
           },
         });
 
         if (!res.ok) {
           if (res.status === 401) {
-            localStorage.removeItem("token");
-            router.push("/admin/login");
+            localStorage.removeItem("adminToken");
+            router.push("/adminlogin");
             return;
           }
           throw new Error("Failed to fetch complaints");
@@ -58,25 +59,23 @@ export default function AdminDashboard() {
   }, [router]);
 
   const markAsResolved = async (id: number) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    const adminToken = localStorage.getItem("adminToken");
+    if (!adminToken) return;
 
     setUpdatingId(id);
 
     try {
-      const res = await fetch(`http://localhost:8000/admin/complaints/${id}/resolve`, {
+      const res = await fetch(`${API_BASE_URL}/admin/complaints/${id}/resolve`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
 
       if (res.ok) {
         setComplaints((prev) =>
-          prev.map((c) =>
-            c.id === id ? { ...c, status: "resolved" } : c
-          )
+          prev.map((c) => (c.id === id ? { ...c, status: "resolved" } : c))
         );
       } else {
         alert("Failed to update status");
@@ -89,7 +88,7 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("adminToken");
     router.push("/adminlogin");
   };
 
@@ -97,7 +96,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-gray-300 dark:border-gray-700 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          <Loader2 className="h-12 w-12 text-green-600 animate-spin mx-auto" />
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading complaints...</p>
         </div>
       </div>
@@ -106,7 +105,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-300">
-
       <div className="max-w-7xl mx-auto px-6 py-10">
         <div className="flex justify-between items-end mb-10">
           <div>

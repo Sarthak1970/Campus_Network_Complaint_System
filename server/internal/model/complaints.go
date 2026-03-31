@@ -8,15 +8,15 @@ type Complaint struct {
 	LastName    string    `json:"last_name"`
 	Email       string    `json:"email"`
 	RollNo      string    `json:"roll_no"`
-	Type        string    `json:"type_of_complaint"`
+	Type 		string 	  `json:"type_of_complaint" gorm:"column:type_of_complaint"`
 	Description string    `json:"description"`
 	Location    string    `json:"location"`
 	Date        string    `json:"date"`
 	Time        string    `json:"time"`
 	Image       string    `json:"image,omitempty"`
 	Status      string    `json:"status"`      
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CreatedAt 	time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt 	time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`	
 }
 
 type CreateComplaintRequest struct {

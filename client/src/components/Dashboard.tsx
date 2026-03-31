@@ -1,9 +1,9 @@
-// app/dashboard/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, TrendingUp, Clock, CheckCircle, AlertCircle, BarChart3, Loader } from 'lucide-react';
+import { Plus, TrendingUp, Clock, CheckCircle, AlertCircle, BarChart3, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '../app/lib/config';
 
 type TimeFilter = '7d' | '30d' | '90d' | 'all';
 
@@ -12,7 +12,6 @@ interface DashboardStats {
   active: number;
   resolved: number;
   avgTime: string;
-  trendValue?: number;
 }
 
 interface RecentComplaint {
@@ -35,9 +34,8 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<TimeFilter>('30d');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);  
 
-  // Fetch dashboard data on component mount and when filter changes
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -47,16 +45,21 @@ export default function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/dashboard');
+      const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch dashboard data: ${response.statusText}`);
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
 
       const data: DashboardData = await response.json();
       setDashboardData(data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching dashboard data';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard';
       setError(errorMessage);
       console.error('Dashboard fetch error:', err);
     } finally {
@@ -68,9 +71,9 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader className="h-12 w-12 text-emerald-600 animate-spin" />
+          <Loader2 className="h-12 w-12 text-emerald-600 animate-spin" />
           <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
@@ -79,13 +82,14 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 p-6 bg-red-50 dark:bg-red-950 rounded-3xl border border-red-200 dark:border-red-900">
-          <AlertCircle className="h-12 w-12 text-red-600" />
-          <p className="text-red-900 dark:text-red-100 text-center">{error}</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center p-6">
+        <div className="max-w-md text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-red-600 dark:text-red-400 mb-2">Failed to load dashboard</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <button
             onClick={fetchDashboardData}
-            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-colors"
           >
             Retry
           </button>
@@ -95,15 +99,11 @@ export default function DashboardPage() {
   }
 
   if (!dashboardData || !stats) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-400">No data available</p>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center">No data available</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-12">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] pb-12">
       <div className="max-w-7xl mx-auto px-6 pt-8">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
@@ -112,7 +112,7 @@ export default function DashboardPage() {
               Dashboard
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
-              Campus Network • WiFi • Internet Complaints
+              Campus Complaint Management System
             </p>
           </div>
 
@@ -139,8 +139,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          
           <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
@@ -148,12 +148,8 @@ export default function DashboardPage() {
                 <p className="text-5xl font-semibold text-gray-900 dark:text-white mt-3">{stats.total}</p>
               </div>
               <div className="h-12 w-12 bg-emerald-100 dark:bg-emerald-950 rounded-2xl flex items-center justify-center">
-                <BarChart3 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+                <BarChart3 className="h-7 w-7 text-emerald-600" />
               </div>
-            </div>
-            <div className="flex items-center gap-2 mt-6 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-              <TrendingUp className="h-4 w-4" />
-              <span>+{stats.trendValue || 12}% from last period</span>
             </div>
           </div>
 
@@ -161,26 +157,24 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Complaints</p>
-                <p className="text-5xl font-semibold text-amber-600 dark:text-amber-400 mt-3">{stats.active}</p>
+                <p className="text-5xl font-semibold text-amber-600 mt-3">{stats.active}</p>
               </div>
               <div className="h-12 w-12 bg-amber-100 dark:bg-amber-950 rounded-2xl flex items-center justify-center">
-                <AlertCircle className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+                <AlertCircle className="h-7 w-7 text-amber-600" />
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">Awaiting resolution</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Resolved</p>
-                <p className="text-5xl font-semibold text-emerald-600 dark:text-emerald-400 mt-3">{stats.resolved}</p>
+                <p className="text-5xl font-semibold text-emerald-600 mt-3">{stats.resolved}</p>
               </div>
               <div className="h-12 w-12 bg-emerald-100 dark:bg-emerald-950 rounded-2xl flex items-center justify-center">
-                <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+                <CheckCircle className="h-7 w-7 text-emerald-600" />
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">Successfully closed</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
@@ -190,27 +184,28 @@ export default function DashboardPage() {
                 <p className="text-5xl font-semibold text-gray-900 dark:text-white mt-3">{stats.avgTime}</p>
               </div>
               <div className="h-12 w-12 bg-blue-100 dark:bg-blue-950 rounded-2xl flex items-center justify-center">
-                <Clock className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                <Clock className="h-7 w-7 text-blue-600" />
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">This {filter}</p>
           </div>
         </div>
 
+        {/* New Complaint Button */}
         <div className="mt-12 flex justify-center">
           <Link
             href="/complaint"
-            className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-medium px-10 py-5 rounded-3xl shadow-lg shadow-emerald-500/30 transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-medium px-10 py-5 rounded-3xl shadow-lg shadow-emerald-500/30 transition-all hover:scale-105"
           >
             <Plus className="h-6 w-6" />
             Make a New Complaint
           </Link>
         </div>
 
+        {/* Recent Complaints */}
         <div className="mt-16">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Recent Complaints</h2>
-            <Link href="/complaints" className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-1">
+            <Link href="/complaints" className="text-emerald-600 hover:underline">
               View All →
             </Link>
           </div>
@@ -218,37 +213,34 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
             {dashboardData.recentComplaints.length > 0 ? (
               dashboardData.recentComplaints.map((complaint) => (
-                <div key={complaint.id} className="px-8 py-5 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <div className="flex items-center gap-6 flex-1">
-                    <span className="font-mono text-sm text-gray-400 min-w-12">#NC-{complaint.id}</span>
+                <div key={complaint.id} className="px-8 py-6 border-b border-gray-100 dark:border-gray-800 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <p className="font-medium text-gray-900 dark:text-white">{complaint.description}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {complaint.first_name} {complaint.last_name} • {complaint.location}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4 flex-shrink-0">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      {complaint.type_of_complaint}
-                    </span>
-                    <span
-                      className={`px-4 py-1 text-xs font-medium rounded-2xl whitespace-nowrap ${
-                        complaint.status === 'Active' || complaint.status === 'Pending' || complaint.status === 'Open'
-                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
-                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
-                      }`}
-                    >
-                      {complaint.status}
-                    </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400 min-w-24 text-right">{complaint.time}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        {complaint.type_of_complaint}
+                      </span>
+                      <span className={`px-4 py-1 text-xs font-medium rounded-2xl ${
+                        complaint.status.toLowerCase() === 'resolved' 
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300' 
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+                      }`}>
+                        {complaint.status}
+                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 min-w-[100px] text-right">
+                        {complaint.time}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="px-8 py-12 text-center">
-                <p className="text-gray-500 dark:text-gray-400">No complaints found</p>
-              </div>
+              <div className="p-12 text-center text-gray-500">No recent complaints</div>
             )}
           </div>
         </div>

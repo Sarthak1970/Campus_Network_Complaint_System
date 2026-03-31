@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
-import { adminLogin } from "../lib/api";
+import { API_BASE_URL } from "../lib/config";
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -24,18 +24,41 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const res = await adminLogin({ username, password });
+      const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          username: username.trim(), 
+          password 
+        }),
+      });
 
-      if (res.access_token) {
-        localStorage.setItem("token", res.access_token);
-        router.push("/admin/dashboard");
+      const data = await response.json();
+
+      if (response.ok && data.token) {
+        // Save token
+        localStorage.setItem("adminToken", data.token);
+
+        if (data.admin) {
+          localStorage.setItem("adminInfo", JSON.stringify(data.admin));
+        }
+
+        setError("");
+        router.push("/admindash");        // ← Correct route as per your requirement
       } else {
-        setError("Invalid admin credentials");
+        setError(data.error || data.message || "Invalid admin credentials");
       }
     } catch (err) {
-      setError("Login failed. Please try again.");
+      setError("Unable to connect to server. Please make sure backend is running on port 8080.");
+      console.error("Login error:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleAdminLogin();
     }
   };
 
@@ -44,11 +67,9 @@ export default function AdminLogin() {
       <div className="absolute inset-0 bg-[radial-gradient(at_center,#1a1a2e_0%,transparent_70%)] dark:opacity-100 opacity-30" />
 
       <div className="relative w-full max-w-md">
-
-
         <div className="bg-white dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200 dark:border-gray-800 rounded-3xl p-10 shadow-2xl shadow-black/10 dark:shadow-black/50 transition-all">
           <div className="text-center mb-10">
-            <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-600/10 rounded-2xl flex items-center justify-center mb-4 border border-red-200 dark:border-red-500/20">
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-600/10 rounded-2xl flex items-center justify-center mb-4 border border-green-200 dark:border-green-500/20">
               <Lock className="w-8 h-8 text-green-600 dark:text-green-500" />
             </div>
             <h1 className="text-4xl font-semibold text-gray-900 dark:text-white tracking-tight">
@@ -70,6 +91,7 @@ export default function AdminLogin() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="w-full bg-gray-100 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-2xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white placeholder-gray-500 transition-all"
                   placeholder="Enter admin username"
                 />
@@ -86,13 +108,14 @@ export default function AdminLogin() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-gray-100 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:ring-1 focus:green-red-500 rounded-2xl py-3.5 pl-11 pr-12 text-gray-900 dark:text-white placeholder-gray-500 transition-all"
+                  onKeyDown={handleKeyDown}
+                  className="w-full bg-gray-100 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-2xl py-3.5 pl-11 pr-12 text-gray-900 dark:text-white placeholder-gray-500 transition-all"
                   placeholder="Enter admin password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -108,7 +131,7 @@ export default function AdminLogin() {
             <button
               onClick={handleAdminLogin}
               disabled={isLoading}
-              className="w-full bg-green-700 hover:bg-green-900 disabled:bg-green-900 transition-all duration-200 text-white font-medium py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 disabled:shadow-none"
+              className="w-full bg-green-700 hover:bg-green-800 disabled:bg-green-900 transition-all duration-200 text-white font-medium py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 disabled:shadow-none"
             >
               {isLoading ? (
                 <>
@@ -123,12 +146,12 @@ export default function AdminLogin() {
         </div>
 
         <p className="text-center text-gray-600 dark:text-gray-500 text-sm mt-8">
-          Sign up as Admin{" "}
+          Dont have an admin account?{" "}
           <a
             href="/adminsignup"
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors"
+            className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:underline transition-colors"
           >
-            Go to Admin Signup
+            Create one here
           </a>
         </p>
       </div>

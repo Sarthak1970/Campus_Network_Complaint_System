@@ -91,3 +91,26 @@ func (r *ComplaintRepository) GetRecentComplaints(ctx context.Context, limit int
 
 	return complaints, nil
 }
+
+func (r *ComplaintRepository) CreateAdmin(ctx context.Context, req model.AdminRegisterRequest, hashedPassword string) error {
+	admin := model.Admin{
+		UserID:   req.UserID,
+		Username: req.Username,
+		Password: hashedPassword,
+	}
+
+	return r.db.WithContext(ctx).Create(&admin).Error
+}
+
+func (r *ComplaintRepository) GetAdminByUsername(ctx context.Context, username string) (*model.Admin, error) {
+	var admin model.Admin
+	err := r.db.WithContext(ctx).
+		Where("username = ?", username).
+		First(&admin).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return &admin, nil
+}
+

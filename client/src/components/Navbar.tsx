@@ -72,13 +72,13 @@ export default function Navbar() {
               {theme === "dark" ? "☀️" : "🌙"}
             </button>
 
-            <button
-              type="button"
-              className="hidden sm:flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950"
+            <Link
+              href="/adminlogin"
+              className="hidden sm:flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all duration-200"
             >
               <LogIn size={18} />
-              Sign in
-            </button>
+              Admin-SignIn
+            </Link>
 
             <button
               onClick={toggleMenu}

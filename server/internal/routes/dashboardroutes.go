@@ -5,19 +5,29 @@ import (
 	"Complaint-System/internal/handler"
 	"Complaint-System/internal/service"
 )
- 
-func SetupDashboardRoutes(router *gin.Engine, complaintService *service.ComplaintService) {
-	dashboardHandler := handler.NewDashboardHandler(complaintService)
- 
-	dashboard := router.Group("/api/dashboard")
+
+func SetupComplaintRoutes(r *gin.Engine, svc *service.ComplaintService) {
+	h := handler.NewComplaintHandler(svc)
+	r.POST("/api/complaints", h.CreateComplaint)
+}
+
+func SetupDashboardRoutes(r *gin.Engine, svc *service.ComplaintService) {
+	h := handler.NewDashboardHandler(svc)
+
+	dashboard := r.Group("/api/dashboard")
 	{
-		dashboard.GET("", dashboardHandler.GetDashboard)
- 
-
-		dashboard.GET("/stats", dashboardHandler.GetDashboardStats)
- 
-
-		dashboard.GET("/recent", dashboardHandler.GetRecentComplaints)
+		dashboard.GET("", h.GetDashboard)                   
+		dashboard.GET("/stats", h.GetDashboardStats)         
+		dashboard.GET("/recent", h.GetRecentComplaints)      
 	}
 }
  
+func SetupAdminRoutes(r *gin.Engine, adminService *service.AdminService) {
+	h := handler.NewAdminHandler(adminService)
+
+	admin := r.Group("/api/admin")
+	{
+		admin.POST("/register", h.RegisterAdmin)
+		admin.POST("/login", h.LoginAdmin)
+	}
+}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState} from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { API_BASE_URL } from "../lib/config";   // Correct path
 
 export default function AdminRegister() {
   const [username, setUsername] = useState("");
@@ -16,7 +17,6 @@ export default function AdminRegister() {
 
   const router = useRouter();
 
-
   const handleAdminRegister = async () => {
     if (!username || !userID || !password || !confirmPassword) {
       setError("All fields are required");
@@ -29,7 +29,7 @@ export default function AdminRegister() {
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters long");
       return;
     }
 
@@ -38,24 +38,31 @@ export default function AdminRegister() {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:8000/admin/register", {
+      const response = await fetch(`${API_BASE_URL}/api/admin/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, userID, password }),
+        headers: { 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({ 
+          username: username.trim(),
+          user_id: userID.trim(),     
+          password: password 
+        }),
       });
 
       const data = await response.json();
 
-      if (data.msg || data.message) {
+      if (response.ok) {
         setSuccess("Admin account created successfully!");
         setTimeout(() => {
-          router.push("/admin/login");
+          router.push("/adminlogin");
         }, 1500);
       } else {
-        setError(data.detail || "Registration failed");
+        setError(data.error || data.message || data.detail || "Registration failed. Please try again.");
       }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Network error. Please make sure the backend server is running.");
+      console.error("Registration error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +73,6 @@ export default function AdminRegister() {
       <div className="absolute inset-0 bg-[radial-gradient(at_center,#1a1a2e_0%,transparent_70%)] dark:opacity-100 opacity-30" />
 
       <div className="relative w-full max-w-md">
-
         <div className="bg-white dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200 dark:border-gray-800 rounded-3xl p-10 shadow-2xl shadow-black/10 dark:shadow-black/50 transition-all">
           <div className="text-center mb-10">
             <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-600/10 rounded-2xl flex items-center justify-center mb-4 border border-green-200 dark:border-green-500/20">
@@ -195,11 +201,10 @@ export default function AdminRegister() {
           </div>
         </div>
 
-        {/* Login Link */}
         <p className="text-center text-gray-600 dark:text-gray-500 text-sm mt-8">
           Already have an admin account?{" "}
           <a
-            href="/admin/login"
+            href="/adminlogin"
             className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:underline transition-colors"
           >
             Login here
