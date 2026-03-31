@@ -42,9 +42,6 @@ Thumbs.db
 # Coverage reports
 coverage.out
 
-# Docker (optional but common)
-.dockerignore
-
 # Misc
 *.tmp
 *.bak

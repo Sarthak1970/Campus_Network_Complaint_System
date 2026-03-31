@@ -1,0 +1,25 @@
+# binaries
+*.exe
+*.out
+*.test
+
+# build folders
+bin/
+dist/
+
+# dependencies cache
+vendor/
+
+# git
+.git
+.gitignore
+
+# env files
+.env
+
+# docker
+Dockerfile
+.dockerignore
+
+# logs
+*.log
