@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import { API_BASE_URL } from "../lib/config";
@@ -13,6 +13,12 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
 
   const router = useRouter();
+  useEffect(() => {
+  const token = localStorage.getItem("adminToken");
+  if (token) {
+    router.push("/admindash");
+  }
+  }, [router]);
 
   const handleAdminLogin = async () => {
     if (!username || !password) {
@@ -36,7 +42,6 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Save token
         localStorage.setItem("adminToken", data.token);
 
         if (data.admin) {
@@ -44,7 +49,7 @@ export default function AdminLogin() {
         }
 
         setError("");
-        router.push("/admindash");        // ← Correct route as per your requirement
+        router.push("/admindash");   
       } else {
         setError(data.error || data.message || "Invalid admin credentials");
       }

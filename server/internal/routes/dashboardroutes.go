@@ -29,5 +29,7 @@ func SetupAdminRoutes(r *gin.Engine, adminService *service.AdminService) {
 	{
 		admin.POST("/register", h.RegisterAdmin)
 		admin.POST("/login", h.LoginAdmin)
+		admin.GET("/complaints", h.GetAllComplaints)          
+		admin.PATCH("/complaints/:id/resolve", h.ResolveComplaintAdmin)
 	}
 }

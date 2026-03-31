@@ -1,1 +1,50 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+
+# Test binaries
+*.test
+
+# Build folders
+bin/
+dist/
+build/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Vendor folder (optional: ignore only if not committing dependencies)
+vendor/
+
+# Logs
+*.log
+
+# Environment variables (IMPORTANT)
 .env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage reports
+coverage.out
+
+# Docker (optional but common)
+.dockerignore
+
+# Misc
+*.tmp
+*.bak

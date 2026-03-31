@@ -60,3 +60,11 @@ func (s *AdminService) LoginAdmin(ctx context.Context, req model.AdminLoginReque
 
 	return tokenString, nil
 }
+
+func (s *AdminService) GetAllComplaintsAdmin(ctx context.Context) ([]model.Complaint, error) {
+	return s.repo.GetAllComplaints(ctx)
+}
+
+func (s *AdminService) ResolveComplaintAdmin(ctx context.Context, id uint) error {
+	return s.repo.UpdateStatus(ctx, id, "Resolved")
+}

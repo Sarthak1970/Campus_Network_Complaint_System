@@ -1,0 +1,27 @@
+# dependencies
+node_modules
+npm-debug.log
+
+# next build
+.next
+out
+
+# env files
+.env
+.env.local
+.env.development
+.env.production
+
+# git
+.git
+.gitignore
+
+# misc
+Dockerfile
+.dockerignore
+README.md
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db

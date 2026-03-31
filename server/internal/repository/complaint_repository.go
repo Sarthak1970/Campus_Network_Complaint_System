@@ -114,3 +114,12 @@ func (r *ComplaintRepository) GetAdminByUsername(ctx context.Context, username s
 	return &admin, nil
 }
 
+func (r *ComplaintRepository) UpdateStatus(ctx context.Context, id uint, status string) error {
+	return r.db.WithContext(ctx).
+		Model(&model.Complaint{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"status":     status,
+			"updated_at": time.Now(),
+		}).Error
+}
