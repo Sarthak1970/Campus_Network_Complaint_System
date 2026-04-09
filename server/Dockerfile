@@ -15,6 +15,10 @@ FROM alpine:latest
 
 WORKDIR /app
 
+RUN apk --no-cache add ca-certificates
+
 COPY --from=builder /app/server .
 
 EXPOSE 8080
+
+CMD ["./server"]
