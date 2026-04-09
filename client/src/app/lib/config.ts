@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://campus-network-complaint-system-1.onrender.com";
 
 export const API_BASE_URL = BACKEND_URL;
 
