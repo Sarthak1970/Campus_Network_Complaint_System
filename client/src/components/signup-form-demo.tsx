@@ -33,7 +33,7 @@ export default function ComplaintForm() {
     setSuccess(false);
 
     try {
-      const response = await fetch("https://campus-network-complaint-system-1.onrender.com"", {
+      const response = await fetch("https://campus-network-complaint-system-1.onrender.com", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
