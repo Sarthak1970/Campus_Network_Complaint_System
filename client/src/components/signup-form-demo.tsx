@@ -21,6 +21,7 @@ export default function ComplaintForm() {
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -31,28 +32,37 @@ export default function ComplaintForm() {
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
+    setError("");
 
     try {
-      const response = await fetch("https://campus-network-complaint-system-1.onrender.com", {
+      const response = await fetch("https://campus-network-complaint-system-1.onrender.com/api/complaints", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json" 
+        },
         body: JSON.stringify(formData),
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         setSuccess(true);
         alert("Complaint submitted successfully!");
+        
+        // Reset form
         setFormData({
           first_name: "", last_name: "", email: "", roll_no: "",
           type_of_complaint: "", description: "", location: "",
           date: "", time: "", image: ""
         });
       } else {
-        alert("Failed to submit complaint");
+        setError(data.error || data.detail || "Failed to submit complaint");
+        alert("❌ " + (data.error || data.detail || "Failed to submit complaint"));
       }
-    } catch (error) {
-      console.error(error);
-      alert("Could not connect to server. Is backend running?");
+    } catch (err) {
+      console.error(err);
+      setError("Could not connect to server");
+      alert("❌ Could not connect to server. Please check your internet.");
     } finally {
       setLoading(false);
     }
@@ -73,67 +83,38 @@ export default function ComplaintForm() {
         </div>
       )}
 
+      {error && (
+        <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg text-center">
+          {error}
+        </div>
+      )}
+
       <form className="my-8" onSubmit={handleSubmit}>
         <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
           <LabelInputContainer>
             <Label htmlFor="first_name">First name</Label>
-            <Input 
-              id="first_name" 
-              placeholder="Tyler" 
-              type="text" 
-              value={formData.first_name}
-              onChange={handleChange}
-              required 
-            />
+            <Input id="first_name" placeholder="Tyler" type="text" value={formData.first_name} onChange={handleChange} required />
           </LabelInputContainer>
 
           <LabelInputContainer>
             <Label htmlFor="last_name">Last name</Label>
-            <Input 
-              id="last_name" 
-              placeholder="Durden" 
-              type="text" 
-              value={formData.last_name}
-              onChange={handleChange}
-              required 
-            />
+            <Input id="last_name" placeholder="Durden" type="text" value={formData.last_name} onChange={handleChange} required />
           </LabelInputContainer>
         </div>
 
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
-          <Input 
-            id="email" 
-            placeholder="your.email@college.edu" 
-            type="email" 
-            value={formData.email}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="email" placeholder="your.email@college.edu" type="email" value={formData.email} onChange={handleChange} required />
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
           <Label htmlFor="roll_no">Roll Number</Label>
-          <Input 
-            id="roll_no" 
-            placeholder="23DCS024" 
-            type="text" 
-            value={formData.roll_no}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="roll_no" placeholder="23DCS024" type="text" value={formData.roll_no} onChange={handleChange} required />
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
           <Label htmlFor="type_of_complaint">Type of Complaint</Label>
-          <Input 
-            id="type_of_complaint" 
-            placeholder="No Internet / Slow Speed / Router Issue" 
-            type="text" 
-            value={formData.type_of_complaint}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="type_of_complaint" placeholder="No Internet / Slow Speed / Router Issue" type="text" value={formData.type_of_complaint} onChange={handleChange} required />
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
@@ -156,52 +137,28 @@ export default function ComplaintForm() {
 
         <LabelInputContainer className="mb-4">
           <Label htmlFor="location">Location</Label>
-          <Input 
-            id="location" 
-            placeholder="Hostel Block A - Room 305" 
-            type="text" 
-            value={formData.location}
-            onChange={handleChange}
-            required 
-          />
+          <Input id="location" placeholder="Hostel Block A - Room 305" type="text" value={formData.location} onChange={handleChange} required />
         </LabelInputContainer>
 
         <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
           <LabelInputContainer>
             <Label htmlFor="date">Date</Label>
-            <Input 
-              id="date" 
-              type="date" 
-              value={formData.date}
-              onChange={handleChange}
-              required 
-            />
+            <Input id="date" type="date" value={formData.date} onChange={handleChange} required />
           </LabelInputContainer>
 
           <LabelInputContainer>
             <Label htmlFor="time">Time</Label>
-            <Input 
-              id="time" 
-              type="time" 
-              value={formData.time}
-              onChange={handleChange}
-              required 
-            />
+            <Input id="time" type="time" value={formData.time} onChange={handleChange} required />
           </LabelInputContainer>
         </div>
 
         <LabelInputContainer className="mb-6">
           <Label htmlFor="image">Upload Image (Optional)</Label>
-          <Input 
-            id="image" 
-            type="file" 
-            accept="image/*"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                setFormData(prev => ({ ...prev, image: e.target.files![0].name }));
-              }
-            }}
-          />
+          <Input id="image" type="file" accept="image/*" onChange={(e) => {
+            if (e.target.files?.[0]) {
+              setFormData(prev => ({ ...prev, image: e.target.files![0].name }));
+            }
+          }} />
         </LabelInputContainer>
 
         <button
